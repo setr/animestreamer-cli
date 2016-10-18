@@ -11,8 +11,8 @@ Requires:
   * mpv
 
 ```bash
-pip install click, attr, bs4
-npm install -g webtorrent
+pip install click attrs bs4
+npm install -g webtorrent-cli
 git clone https://github.com/setr/animestreamer-cli.git
 cd animestreamer-cli
 ./nyaa "search_query"
