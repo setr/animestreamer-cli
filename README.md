@@ -17,3 +17,24 @@ git clone https://github.com/setr/animestreamer-cli.git
 cd animestreamer-cli
 ./nyaa "search_query"
 ```
+
+## TODO
+
+### Torrent
+* ``` webtorrent --download "magnet-link" --mpv ``` dl and stream
+* add bakabt, kickass
+
+### Stream
+1. query against multiple anime sites
+2. parse and gather results
+ * site, resolution, size, name, sub/dub
+3. display options in order of resolution
+4. stream to mpv ```mpv "video-url"```
+
+* kissanime, masterani
+
+### Options
+* stream / torrent
+* arbitrary args to pass to mpv
+* mpv pick
+* download / stream / both
