@@ -31,10 +31,16 @@ cd animestreamer-cli
 3. display options in order of resolution
 4. stream to mpv ```mpv "video-url"```
 
-* kissanime, masterani
+* ~~kissanime~~, masterani
 
 ### Options
 * stream / torrent
 * arbitrary args to pass to mpv
 * mpv pick
 * download / stream / both
+
+## UI
+* multi-select playlist
+* ask for search term if not given
+* fast way to drop in options
+* possibly not quit python when webtorrent dies; instead offer list to choose another episode
