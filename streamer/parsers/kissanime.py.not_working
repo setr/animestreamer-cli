@@ -1,0 +1,32 @@
+#!/usr/bin/env python2.7
+import cfscrape
+from bs4 import BeautifulSoup
+
+kiss = 'http://kissanime.to';
+scraper = cfscrape.create_scraper() # to get past cloudflare
+headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+def fetch_kiss(search_query):
+    def getsoup(link, data):
+        html = scraper.post(link, data=data,headers=headers)
+        html = html.content
+        soup = BeautifulSoup(html, 'html.parser')
+        print soup
+        return soup
+    link = kiss + "/Search/Anime"
+    link = 'http://kissanime.to/Search/Anime'
+
+    soup = getsoup(link, {'keyword': search_query})
+
+    listing = soup.find_all("table", class_= "listing")
+
+
+    links = []
+    for link in listing.findAll("a")[0]:
+        if "/Anime/" in row[href]:
+            print row.text
+            print row.href
+fetch_kiss("urusei")
+
+
+
+
