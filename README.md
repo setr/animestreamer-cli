@@ -13,9 +13,16 @@ Requires:
 ```bash
 pip install click attrs bs4
 npm install -g webtorrent-cli
-git clone https://github.com/setr/animestreamer-cli.git
-cd animestreamer-cli
-./nyaa "search_query"
+# for osx, because pip tries to delete the system's python2 six
+pip2 install nyaa-cli --ignore-installed six
+# normal install
+pip2 install nyaa-cli
+
+Usage:
+nyaa [web|torrent] [query]
+
+Ex:
+nyaa web "urusei"
 ```
 
 ## TODO

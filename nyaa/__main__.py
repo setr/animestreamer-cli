@@ -1,8 +1,8 @@
 #!/usr/bin/env python2.7
 from __future__ import absolute_import
 import click, subprocess
-from webstream import *
-from webtorrent import *
+from nyaa.webstream import *
+from nyaa.webtorrent import *
 
 @click.group()
 def cli():
@@ -11,7 +11,7 @@ def cli():
 @click.command()
 @click.argument('search_query')
 def torrent(search_query):
-    from parsers.nyaa import parser as nyaa
+    from nyaa.parsers.nyaa import parser as nyaa
     torrents = nyaa.fetch_torrentlist("urusei")
     torrent = pick_torrent(torrents)
     magnet = torrent.get_magnet(torrent.link)
@@ -25,7 +25,7 @@ def torrent(search_query):
 @click.command()
 @click.argument('search_query')
 def web(search_query):
-    from parsers.masterani import parser as masterani
+    from nyaa.parsers.masterani import parser as masterani
     # pick a show
     # pick an episode
     # pick a host
@@ -39,8 +39,10 @@ def web(search_query):
     subprocess.call( ["mpv", url] )
 
 
-
-if __name__ == "__main__":
+def main():
     cli.add_command(torrent)
     cli.add_command(web)
     cli()
+
+if __name__ == "__main__":
+    main()
