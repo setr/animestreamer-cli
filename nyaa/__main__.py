@@ -13,22 +13,38 @@ def pick(objtype, options):
     p = click.prompt("Pick {}".format(objtype), type=click.IntRange(1, len(options)))
     return options[p-1]
 
+def select(text, options, quickvar, sh_quick=True):
+    # sh_quick --> should we consider quickvar? loops only want to use it once.
+    if quickvar and sh_quick:
+        try:
+            return options[quickvar-1]
+        except IndexError:
+            click.echo("{}: Index out of range.".format(text))
+    return pick(text, options)
+
 @click.group()
 def cli():
     pass
 
 @click.command('torrent', short_help='Search from available streaming websites')
 @click.option('--search_query' , '-s' , prompt="Please enter a search term")
-@click.option('--torrent'      , '-t' , default=None, type=int)
-@click.option('--file-number'  , '-f' , default=None, type=int)
-def torrent(search_query, torrent, file_number):
+@click.option('--quick', '-q', multiple=True, type=int, help="quick select menu items. Only makes sense with -n")
+@click.option('--sortbyname'  ,  '-n' , is_flag=True)
+def torrent(search_query, quick, sortbyname):
     # pick a torrent
     # pick a video from the torrent
     # play
     from nyaa.parsers.nyaa import parser as nyaa
 
+    q_torrent = quick[0] if quick else None
+    q_filenum = quick[1] if len(quick) > 1 else None
+
     torrents = nyaa.fetch_torrentlist("urusei")
-    torrent = torrents[torrent-1] if torrent else pick("Torrent", torrents)
+
+    if sortbyname:
+        torrents = sorted(torrents, key=lambda x: x.name)
+
+    torrent = select("Torrent", torrents, q_torrent)
     magnet = torrent.get_magnet(torrent)
 
     click.echo("getting filelist...")
@@ -37,15 +53,15 @@ def torrent(search_query, torrent, file_number):
 
     first = True
     while True:
-        select = file_number if file_number and first else pick("Torrent File", filelist).index
+        filen = select("Torrent File", filelist, q_filenum, sh_quick=first)
 
         name = click.style(torrent.name, underline=True)
-        f  = click.style(filelist[select].name, fg="magenta")
+        f  = click.style(filen.name, fg="magenta")
         click.echo(u"Playing: File {} {}".format(f, name))
         try:
             subprocess.call( ["webtorrent", magnet,
                                 "--mpv",
-                                "--select", str(select)])
+                                "--select", str(filen)])
         except KeyboardInterrupt:
             time.sleep(0.5) # so the user has a chance to interrupt again to kill python, in the case of a single torrent-file
         first = False
@@ -53,24 +69,28 @@ def torrent(search_query, torrent, file_number):
 
 @click.command('web', short_help='Search from available streaming websites')
 @click.option('--search_query' , '-s' , prompt="Please enter a search term")
-@click.option('--show'         , '-w' , default=None, type=int)
-@click.option('--episode_num'  , '-e' , default=None, type=int)
-@click.option('--host'         , '-h' , default=None, type=int)
-def web(search_query, show, episode_num, host):
+@click.option('--quick', '-q', multiple=True, type=int)
+def web(search_query, quick):
     from nyaa.parsers.masterani import parser as masterani
     # pick a show
     # pick an episode
     # pick a host
     # play
+    q_show   = quick[0] if quick else None
+    q_epnum = quick[1] if len(quick) > 1 else None
+    q_host   = quick[2] if len(quick) > 2 else None
+
+
     shows = masterani.fetch_shows(search_query)
-    show = shows[show] if show else pick("Show", shows)
-    episodes = show.get_episodelist(show.link)
+    show = select("Show", shows, q_show)
+    episodes = show.nextlist()
+    #episodes = show.get_episodelist(show.link)
 
     first = True
     while True:
-        episode = episodes[episode_num-1] if episode_num and first else pick("Episode", episodes) 
-        hosts = episode.get_videos(episode.ep_link)
-        url = hosts[host-1] if host and first else pick("Host", hosts)
+        episode = select("Episode", episodes, q_epnum, sh_quick=first)
+        hosts = episode.nextlist()
+        url = select("Host", hosts, q_host, sh_quick=first)
         url = url.link
 
         try:

@@ -63,6 +63,9 @@ class WebSeries(object):
     link            = attr.ib()
     get_episodelist = attr.ib()
     ep_count        = attr.ib(default = None)
+    def nextlist(self):
+        return self.get_episodelist(self.link) 
+
     def __format__(self, format_spec):  
         ep_count = click.style("({:3})".format(self.ep_count), fg="blue")
         name = stylename(self.name)
@@ -74,6 +77,9 @@ class WebEpisode(object):
     ep_title   = attr.ib()
     ep_link    = attr.ib()
     get_videos = attr.ib()
+
+    def nextlist(self):
+        return self.get_videos(self.ep_link) 
     def __format__(self, format_spec):
         ep_num = click.style("({:>3})".format(self.ep_number), fg="blue")
         name = stylename(self.ep_title)
