@@ -28,8 +28,8 @@ nyaa web "urusei"
 ## TODO
 
 ### Torrent
-* ``` webtorrent --download "magnet-link" --mpv ``` dl and stream
-* add bakabt, kickass
+[ ] ``` webtorrent download "magnet-link" --mpv ``` dl and stream
+[ ] add bakabt, kickass
 
 ### Stream
 1. query against multiple anime sites
@@ -41,13 +41,13 @@ nyaa web "urusei"
 * ~~kissanime~~, masterani
 
 ### Options
-* stream / torrent
-* arbitrary args to pass to mpv
-* mpv pick
-* download / stream / both
+[x] stream / torrent
+[ ] arbitrary args to pass to mpv
+[ ] mpv pick
+[ ] download / stream / both (WebTorrent)
 
 ## UI
-* multi-select playlist
-* ask for search term if not given
-* fast way to drop in options
-* possibly not quit python when webtorrent dies; instead offer list to choose another episode
+[ ] multi-select playlist
+[x] ask for search term if not given
+[x] fast way to drop in options
+[x] possibly not quit python when webtorrent dies; instead offer list to choose another episode

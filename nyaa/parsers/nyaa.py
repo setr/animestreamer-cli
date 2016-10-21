@@ -1,6 +1,7 @@
 #!/usr/bin/env python2.7
 
-import urllib2
+import cfscrape
+import requests
 from bs4 import BeautifulSoup
 import re
 from multiprocessing import Pool
@@ -8,10 +9,10 @@ from multiprocessing.dummy import Pool as ThreadPool
 import subprocess
 import classes
 
+scraper = cfscrape.create_scraper()
 def fetch_nyaa(search_query):
     def getsoup(pgnum, link):
-        response = urllib2.urlopen(link)
-        html = response.read()
+        html = scraper.get(link).content
         soup = BeautifulSoup(html, 'html.parser')
         return pgnum, soup
 
@@ -41,14 +42,17 @@ def fetch_nyaa(search_query):
 def parse_nyaa(soup, data):
     temp = []
 
-    def get_magnet(link):
+    def get_magnet(torrent):
+        link = torrent.link
         tid = re.search("&tid=(\d+)", link).group(1)
         magnet = "https://www.nyaa.se/?page=download&tid=" + tid + "&magnet=1"
-        # we actually need it to fail, as nyaa redirects to the magnetlink and baffles urllib
+        # we actually need it to fail, as nyaa redirects to the magnetlink and baffles urllib/requests
         try:
-            response = urllib2.urlopen(magnet)
-        except urllib2.HTTPError, e:
-            magnet = e.geturl().replace("magnet:/?", "magnet:?")
+            response = scraper.get(magnet)
+        except requests.exceptions.InvalidSchema, e:
+            magnet = e.args[0]
+            magnet = re.search("(magnet:.*)'", magnet).group(1)
+            #magnet = e.geturl().replace("magnet:/?", "magnet:?")
         return magnet 
 
     for row in soup.findAll("tr", {"class": "tlistrow"}):
