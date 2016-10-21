@@ -1,8 +1,9 @@
 #!/usr/bin/env python2.7
+from __future__ import absolute_import
 import cfscrape
 from bs4 import BeautifulSoup
 import json, re
-from classes import WebEpisode, WebSeries, WebVideo, WebFetcher
+from .classes import WebEpisode, WebSeries, WebVideo, WebFetcher
 
 base = "http://www.masterani.me/anime"
 api_base = "http://www.masterani.me/api/anime/"
@@ -16,13 +17,13 @@ def fetch_masterani(search_query):
     # json results has the actual results we care about
     # the html just contains some additional metadata we can use
     videolist = []
-    for anime in json.loads(jsonresults):
+    for anime in json.loads(jsonresults.decode('utf-8')):
         link = base + "/info/" + anime['slug']
         name = anime['title']
         animeid = str(anime['id'])
 
         detailjson = scraper.get( api_base + animeid + "/detailed").content
-        d = json.loads(detailjson)
+        d = json.loads(detailjson.decode('utf-8'))
         episode_count = d['info']['episode_count']
 
         # since getting the episode count got us all the info for making WebEpisode objects too,

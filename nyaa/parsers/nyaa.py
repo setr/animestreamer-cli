@@ -1,5 +1,6 @@
 #!/usr/bin/env python2.7
 
+from __future__ import absolute_import
 import cfscrape
 import requests
 from bs4 import BeautifulSoup
@@ -7,7 +8,7 @@ import re
 from multiprocessing import Pool
 from multiprocessing.dummy import Pool as ThreadPool 
 import subprocess
-import classes
+from . import classes
 
 scraper = cfscrape.create_scraper()
 def fetch_nyaa(search_query):
@@ -49,7 +50,7 @@ def parse_nyaa(soup, data):
         # we actually need it to fail, as nyaa redirects to the magnetlink and baffles urllib/requests
         try:
             response = scraper.get(magnet)
-        except requests.exceptions.InvalidSchema, e:
+        except requests.exceptions.InvalidSchema as e:
             magnet = e.args[0]
             magnet = re.search("(magnet:.*)'", magnet).group(1)
             #magnet = e.geturl().replace("magnet:/?", "magnet:?")

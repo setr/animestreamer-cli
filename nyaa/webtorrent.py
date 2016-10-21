@@ -1,5 +1,5 @@
 import os, subprocess, re, click
-from parsers.classes import Torrent_File
+from nyaa.parsers.classes import Torrent_File
 
 name_color = "white"
 
