@@ -36,4 +36,3 @@ def webtorrent_filelist(magnet):
                              size = gutted.group(3))
         filelist.append(tfile)
     return filelist
-

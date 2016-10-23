@@ -20,18 +20,29 @@ class TorrentFetcher(object):
 
     def __format__(self, format_spec):  
         return u"{}".format(sitename)
+    def __str__(self):  
+        return u"{}".format(sitename)
 
 @attr.s
 class Torrent(object):
-    name       = attr.ib()
-    trusted    = attr.ib()
-    size       = attr.ib()
-    seeders    = attr.ib()
-    leechers   = attr.ib()
-    link       = attr.ib()
-    get_magnet = attr.ib()
-    
+    name        = attr.ib()
+    trusted     = attr.ib()
+    size        = attr.ib()
+    seeders     = attr.ib()
+    leechers    = attr.ib()
+    link        = attr.ib()
+    get_magnet  = attr.ib()
+    description = attr.ib(default = "Description not available")
+    options     = [('s', 'select the torrent'),
+                   ('d', 'describe the torrent')]
+
     def __format__(self, format_spec):  
+        name = stylename(self.name)
+        seeders  = click.style("{:3}".format(self.seeders)  , fg = "green")
+        leechers = click.style("{:3}".format(self.leechers) , fg = "red")
+        size     = click.style("{:10}".format(self.size)    , fg = "blue")
+        return u"{} {} {} {:100}".format(seeders, leechers, size, name)
+    def __str__(self):  
         name = stylename(self.name)
         seeders  = click.style("{:3}".format(self.seeders)  , fg = "green")
         leechers = click.style("{:3}".format(self.leechers) , fg = "red")
@@ -49,12 +60,20 @@ class Torrent_File(object):
         size = click.style(self.size , fg="blue")
         return u"{:17} {:100}".format(size, name)
 
+    def __str__(self):  
+        name = stylename(self.name)
+        size = click.style(self.size , fg="blue")
+        return u"{:17} {:100}".format(size, name)
+
 @attr.s
 class WebFetcher(object):
-    sitename = attr.ib()
+    sitename    = attr.ib()
     fetch_shows = attr.ib()
+    options     = None
 
     def __format__(self, format_spec):  
+        return u"{}".format(sitename)
+    def __str__(self):  
         return u"{}".format(sitename)
 
 @attr.s
@@ -63,6 +82,9 @@ class WebSeries(object):
     link            = attr.ib()
     get_episodelist = attr.ib()
     ep_count        = attr.ib(default = None)
+    description     = attr.ib(default = "Description not available")
+    options     = [('s', 'select the series'),
+                   ('d', 'describe the series')]
     def nextlist(self):
         return self.get_episodelist(self.link) 
 
@@ -71,16 +93,30 @@ class WebSeries(object):
         name = stylename(self.name)
         return u"{} {:100}".format(ep_count , name)
 
+    def __str__(self):  
+        ep_count = click.style("({:3})".format(self.ep_count), fg="blue")
+        name = stylename(self.name)
+        return u"{} {:100}".format(ep_count , name)
+
 @attr.s
 class WebEpisode(object):
-    ep_number  = attr.ib()
-    ep_title   = attr.ib()
-    ep_link    = attr.ib()
-    get_videos = attr.ib()
+    ep_number   = attr.ib()
+    ep_title    = attr.ib()
+    ep_link     = attr.ib()
+    get_videos  = attr.ib()
+    description = attr.ib(default = "Description not available")
+    options     = [('s', 'select the episode'),
+                   ('d', 'describe the episode')]
 
     def nextlist(self):
         return self.get_videos(self.ep_link) 
+
     def __format__(self, format_spec):
+        ep_num = click.style("({:>3})".format(self.ep_number), fg="blue")
+        name = stylename(self.ep_title)
+        return u"{} {:100}".format(ep_num, name)
+
+    def __str__(self):
         ep_num = click.style("({:>3})".format(self.ep_number), fg="blue")
         name = stylename(self.ep_title)
         return u"{} {:100}".format(ep_num, name)
@@ -90,7 +126,13 @@ class WebVideo(object):
     host       = attr.ib()
     resolution = attr.ib()
     link       = attr.ib()
+    options    = None
     def __format__(self, format_spec):
+        res = self.resolution + "p"
+        resolution = click.style("({:>5})".format(res), fg="blue")
+        name = stylename(self.host)
+        return u"{} {:100}".format(resolution, name)
+    def __str__(self):
         res = self.resolution + "p"
         resolution = click.style("({:>5})".format(res), fg="blue")
         name = stylename(self.host)
