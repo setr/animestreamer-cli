@@ -13,10 +13,17 @@ def stylename(name):
     cname += click.style(name[j:], fg= name_color)
     return cname
 
+def set_description(val):
+    if not val:
+        return "Description not available"
+    elif not callable(val):
+        return lambda: val
+
 @attr.s
 class TorrentFetcher(object):
     sitename = attr.ib()
     fetch_torrentlist = attr.ib()
+    description = attr.ib(default="Description not available", convert=set_description)
 
     def __format__(self, format_spec):  
         return u"{}".format(sitename)
@@ -32,9 +39,7 @@ class Torrent(object):
     leechers    = attr.ib()
     link        = attr.ib()
     get_magnet  = attr.ib()
-    description = attr.ib(default = "Description not available")
-    options     = [('s', 'select the torrent'),
-                   ('d', 'describe the torrent')]
+    description = attr.ib(default="Description not available", convert=set_description)
 
     def __format__(self, format_spec):  
         name = stylename(self.name)
@@ -54,6 +59,7 @@ class Torrent_File(object):
     index    = attr.ib()
     name     = attr.ib()
     size     = attr.ib()
+    description = attr.ib(default="Description not available", convert=set_description)
 
     def __format__(self, format_spec):  
         name = stylename(self.name)
@@ -70,6 +76,7 @@ class WebFetcher(object):
     sitename    = attr.ib()
     fetch_shows = attr.ib()
     options     = None
+    description = attr.ib(default="Description not available", convert=set_description)
 
     def __format__(self, format_spec):  
         return u"{}".format(sitename)
@@ -82,9 +89,7 @@ class WebSeries(object):
     link            = attr.ib()
     get_episodelist = attr.ib()
     ep_count        = attr.ib(default = None)
-    description     = attr.ib(default = "Description not available")
-    options     = [('s', 'select the series'),
-                   ('d', 'describe the series')]
+    description     = attr.ib(default = "Description not available", convert = set_description)
     def nextlist(self):
         return self.get_episodelist(self.link) 
 
@@ -104,9 +109,7 @@ class WebEpisode(object):
     ep_title    = attr.ib()
     ep_link     = attr.ib()
     get_videos  = attr.ib()
-    description = attr.ib(default = "Description not available")
-    options     = [('s', 'select the episode'),
-                   ('d', 'describe the episode')]
+    description = attr.ib(default = "Description not available", convert = set_description)
 
     def nextlist(self):
         return self.get_videos(self.ep_link) 
@@ -126,7 +129,8 @@ class WebVideo(object):
     host       = attr.ib()
     resolution = attr.ib()
     link       = attr.ib()
-    options    = None
+    description = attr.ib(default = "Description not available", convert = set_description)
+
     def __format__(self, format_spec):
         res = self.resolution + "p"
         resolution = click.style("({:>5})".format(res), fg="blue")

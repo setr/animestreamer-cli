@@ -3,7 +3,46 @@ from __future__ import absolute_import
 import click, subprocess, time
 from nyaa.webtorrent import *
 
-# show list
+menuopts = ['d']
+def pickloop(objtype, options):
+    def checkrange(i):
+        err = None
+        if p < 1 or p > len(options):
+            err = "Input not in range: 1 - {}".format(len(options))
+        return err
+
+    index = None
+    while not index:
+        userin = click.prompt("Pick {}".format(objtype))
+        err = None
+        try:
+            p = int(userin)
+            err = checkrange(p)
+            if not err:
+                index = p 
+        except ValueError: # integer + modifier ie 10 d 
+            try: 
+                match = re.search("(\d+) *?([A-Za-z])", userin)
+                p = match.group(1)
+                p = int(p)
+                modifier = match.group(2).lower()
+                err = checkrange(p)
+                if not err:
+                    if modifier not in menuopts:
+                        err = "Not a valid option for this menu."
+                    # and now we do anything that doesn't actually select the item ie description
+                    elif modifier == 'd':
+                        click.echo( options[p-1] )
+                        click.echo( '    ' + options[p-1].description() )
+            except AttributeError:
+                i = click.style('[index]', fg="magenta")
+                m = click.style('(modifier)', fg="blue")
+                msg = click.style('invalid input.', fg="red")
+                err = "{} Correct form: {} {}".format(msg, i, m)
+        if err:
+            click.echo(err)
+    return options[index - 1]
+
 def pick(objtype, options, quickpick):
     if len(options) == 0:
         return None
@@ -14,33 +53,11 @@ def pick(objtype, options, quickpick):
     for i, option in enumerate(options):
         index = click.style("{}]".format(i+1), fg="magenta")
         click.echo(u"{:<13} {}".format(index, option))
+    return pickloop(objtype, options)
 
-    #p = click.prompt("Pick {}".format(objtype), type=click.IntRange(1, len(options)))
-    # if there are multiple options available, then show them.
-    if options[0].options and not quickpick:
-        selected = False
-        while not selected:
-            p = click.prompt("Pick {}".format(objtype), type=click.IntRange(1, len(options)))
-
-            click.secho(u"Options:", fg="white")
-            for letter, text in options[0].options:
-                letter = click.style(letter, fg="magenta")
-                click.echo(u"    [{}] {}".format(letter, text))
-
-            modifier = click.prompt("Pick", default="s", show_default=True, type=click.Choice(map(lambda x: x[0], options[0].options)))
-            modifier = modifier.strip()
-            if modifier == 's':
-                selected = True
-            else:
-                if modifier == 'd':
-                    click.echo( options[p-1] )
-                    click.echo( '    ' + options[p-1].description )
-    else: # otherwise, just select it and move on.
-        p = click.prompt("Pick {}".format(objtype), type=click.IntRange(1, len(options)))
-    return options[p-1]
 
 def select(text, options, quickvar, sh_quick=True, quickpick=False):
-    # sh_quick --> should we consider quickvar? loops only want to use it once.
+    # sh_quick --> should we consider quickvar? the big loop only wants to use it once.
     if quickvar and sh_quick:
         try:
             return options[quickvar-1]
@@ -56,7 +73,7 @@ def cli():
 @click.option('--search_query' , '-s' , prompt="Please enter a search term")
 @click.option('--quick', '-q', multiple=True, type=int, help="quick select menu items. Only makes sense with -n")
 @click.option('--quickpick', '-qp', is_flag=True, help="disables option menu for all items")
-@click.option('--sortbyname'  ,  '-n' , is_flag=True)
+@click.option('--sortbyname',  '-n' , is_flag=True)
 @click.option('--mpvpass', '-m', default=None, type=unicode, help="cli options directly passed to mpv. ---TODO")
 @click.option('--webtorrentpass', '-w', default=None, type=unicode, help="cli options directly passed to webtorrent")
 @click.option('-x', type=click.IntRange(0,2), default=0, help="set 0 to stream. set 1 to dl. set 2 to dl & stream. use webtorrent's -o flag to set dl location. default = 0.")
