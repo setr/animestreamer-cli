@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import click, subprocess, time
 from nyaa.webtorrent import *
 
-menuopts = ['d']
+modopts = ['d']
 def pickloop(objtype, options):
     def checkrange(i):
         err = None
@@ -28,7 +28,7 @@ def pickloop(objtype, options):
                 modifier = match.group(2).lower()
                 err = checkrange(p)
                 if not err:
-                    if modifier not in menuopts:
+                    if modifier not in modopts:
                         err = "Not a valid option for this menu."
                     # and now we do anything that doesn't actually select the item ie description
                     elif modifier == 'd':
@@ -69,28 +69,50 @@ def select(text, options, quickvar, sh_quick=True):
 def cli():
     pass
 
-@click.command('torrent', short_help='Search from available streaming websites')
-@click.option('--search_query' , '-s' , prompt="Please enter a search term")
-@click.option('--quick', '-q', multiple=True, type=int, help="quick select menu items. Only makes sense with -n")
+def menuoptfn(ctx, param, value):
+    if value:
+        t = value.split('.')
+        try:
+            return map(int, t)
+        except ValueError:
+            raise click.BadParameter("quick-select must a period delimited list of integers. ie 10.1.2")
+    else:
+        return []
+
+def searchquery(ctx, param, value):
+    if value: # got it from the cli
+        return ' '.join(value)
+    else: # nothing 
+        return click.Prompt("Please enter a search term")
+
+
+@click.command('torrent', short_help='Search from available torrent websites.')
+
+@click.argument('search_query', nargs=-1, 
+        callback=searchquery,
+        required=False)
+
+@click.option('--menuopts', '-o', callback=menuoptfn, help="period delimited list of integers, to pre-emptively select menu options.")
 @click.option('--mpvpass', '-m', default=None, type=unicode, help="cli options directly passed to mpv. ---TODO")
 @click.option('--webtorrentpass', '-w', default=None, type=unicode, help="cli options directly passed to webtorrent")
 @click.option('-x', type=click.IntRange(0,2), default=0, help="set 0 to stream. set 1 to dl. set 2 to dl & stream. use webtorrent's -o flag to set dl location. default = 0.")
 
-def torrent(search_query, quick, mpvpass, webtorrentpass, x):
+def torrent(search_query, menuopts, mpvpass, webtorrentpass, x):
     # pick a torrent
     # pick a video from the torrent
     # play
     from nyaa.parsers.nyaa import parser as nyaa
-
-    q_torrent = quick[0] if quick else None
-    q_filenum = quick[1] if len(quick) > 1 else None
+    if not search_query:
+        search_query = click.Prompt("Please enter a search term")
+     
+    q_torrent = menuopts[0] if menuopts else None
+    q_filenum = menuopts[1] if len(menuopts) > 1 else None
 
     torrents = nyaa.fetch_torrentlist(search_query)
     torrents = sorted(torrents, key=lambda t: t.name)
 
     torrent = select("Torrent", torrents, q_torrent)
     magnet = torrent.get_magnet()
-    print magnet
 
     click.echo("getting filelist...")
     click.echo("")
@@ -120,19 +142,24 @@ def torrent(search_query, quick, mpvpass, webtorrentpass, x):
 
 
 @click.command('web', short_help='Search from available streaming websites')
-@click.option('--search_query' , '-s' , prompt="Please enter a search term")
-@click.option('--quick', '-q', multiple=True, type=int)
+
+@click.argument('search_query', nargs=-1, 
+        callback=searchquery,
+        required=False)
+
+@click.option('--menuopts', '-o', callback=menuoptfn, help="period delimited list of integers, to pre-emptively select menu options.")
 @click.option('--mpvpass', '-m', default=None, type=unicode, help="cli options directly passed to mpv.")
-def web(search_query, quick, mpvpass):
+def web(search_query, menuopts, mpvpass):
     from nyaa.parsers.masterani import parser as masterani
+    if not search_query:
+        search_query = click.Prompt("Please enter a search term")
     # pick a show
     # pick an episode
     # pick a host
     # play
-    q_show   = quick[0] if quick else None
-    q_epnum = quick[1] if len(quick) > 1 else None
-    q_host   = quick[2] if len(quick) > 2 else None
-
+    q_show   = menuopts[0] if menuopts else None
+    q_epnum =  menuopts[1] if len(menuopts) > 1 else None
+    q_host   = menuopts[2] if len(menuopts) > 2 else None
 
     shows = masterani.fetch_shows(search_query)
     show = select("Show", shows, q_show)
