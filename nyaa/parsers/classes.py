@@ -56,10 +56,10 @@ class Torrent(object):
 
 @attr.s
 class Torrent_File(object):
-    index    = attr.ib()
-    name     = attr.ib()
-    size     = attr.ib()
-    description = attr.ib(default="Description not available", convert=set_description)
+    index       = attr.ib()
+    name        = attr.ib()
+    size        = attr.ib()
+    description = attr.ib(default = "Description not available", convert = set_description)
 
     def __format__(self, format_spec):  
         name = stylename(self.name)
@@ -90,8 +90,6 @@ class WebSeries(object):
     get_episodelist = attr.ib()
     ep_count        = attr.ib(default = None)
     description     = attr.ib(default = "Description not available", convert = set_description)
-    def nextlist(self):
-        return self.get_episodelist(self.link) 
 
     def __format__(self, format_spec):  
         ep_count = click.style("({:3})".format(self.ep_count), fg="blue")
@@ -112,7 +110,7 @@ class WebEpisode(object):
     description = attr.ib(default = "Description not available", convert = set_description)
 
     def nextlist(self):
-        return self.get_videos(self.ep_link) 
+        return self.get_videos() 
 
     def __format__(self, format_spec):
         ep_num = click.style("({:>3})".format(self.ep_number), fg="blue")

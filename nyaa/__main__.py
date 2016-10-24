@@ -85,11 +85,12 @@ def torrent(search_query, quick, mpvpass, webtorrentpass, x):
     q_torrent = quick[0] if quick else None
     q_filenum = quick[1] if len(quick) > 1 else None
 
-    torrents = nyaa.fetch_torrentlist("urusei")
+    torrents = nyaa.fetch_torrentlist(search_query)
     torrents = sorted(torrents, key=lambda t: t.name)
 
     torrent = select("Torrent", torrents, q_torrent)
-    magnet = torrent.get_magnet(torrent)
+    magnet = torrent.get_magnet()
+    print magnet
 
     click.echo("getting filelist...")
     click.echo("")
@@ -135,13 +136,13 @@ def web(search_query, quick, mpvpass):
 
     shows = masterani.fetch_shows(search_query)
     show = select("Show", shows, q_show)
-    episodes = show.nextlist()
+    episodes = show.get_episodelist()
     #episodes = show.get_episodelist(show.link)
 
     first = True
     while True:
         episode = select("Episode", episodes, q_epnum, sh_quick=first)
-        hosts = episode.nextlist()
+        hosts = episode.get_videos()
         url = select("Host", hosts, q_host, sh_quick=first)
         url = url.link
 

@@ -43,7 +43,7 @@ def fetch_masterani(search_query):
                         ep_number = ep_number,
                         ep_title = ep_title,
                         ep_link = ep_link,
-                        get_videos = get_videos,
+                        get_videos = lambda: get_videos(ep_link),
                         description = description)
             episodes.append(episode)
          
@@ -52,7 +52,7 @@ def fetch_masterani(search_query):
                     link = link,
                     ep_count = episode_count,
                     description = synopsis,
-                    get_episodelist = lambda x, episodes=episodes: episodes) 
+                    get_episodelist = lambda episodes=episodes: episodes) 
         videolist.append(series)
     return videolist
 

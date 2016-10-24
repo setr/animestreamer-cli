@@ -43,8 +43,7 @@ def fetch_nyaa(search_query):
 def parse_nyaa(soup, data):
     temp = []
 
-    def get_magnet(torrent):
-        link = torrent.link
+    def get_magnet(link):
         tid = re.search("&tid=(\d+)", link).group(1)
         magnet = "https://www.nyaa.se/?page=download&tid=" + tid + "&magnet=1"
         # we actually need it to fail, as nyaa redirects to the magnetlink and baffles urllib/requests
@@ -57,14 +56,21 @@ def parse_nyaa(soup, data):
         return magnet 
 
     for row in soup.findAll("tr", {"class": "tlistrow"}):
+        trusted  = 'trusted' in row['class']
+        name     = row.contents[1].a.text.strip()
+        link     = row.contents[1].a['href']
+        size     = row.contents[3].text.strip()
+        seeders  = row.contents[4].text.strip()
+        leechers = row.contents[5].text.strip()
+
         torrent = classes.Torrent(
-            trusted  = 'trusted' in row['class'],
-            name     = row.contents[1].a.text.strip(),
-            link     = row.contents[1].a['href'],
-            size     = row.contents[3].text.strip(),
-            seeders  = row.contents[4].text.strip(),
-            leechers = row.contents[5].text.strip(),
-            get_magnet = get_magnet)
+            trusted  = trusted,
+            name     = name,
+            link     = link,
+            size     = size,
+            seeders  = seeders,
+            leechers = leechers,
+            get_magnet = lambda: get_magnet(link))
         try:
             if int(torrent.seeders) > 5:
                 temp.append(torrent)
