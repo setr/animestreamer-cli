@@ -2,6 +2,17 @@
 from __future__ import absolute_import
 import click, subprocess, time
 from nyaa.webtorrent import *
+import sys
+from functools import wraps
+
+def handleEmptyMenu(fn):
+    def handleExc(*args, **kwargs):
+        try:
+            fn(*args, **kwargs)
+        except AttributeError:
+            print "No items were found. Exiting."
+            sys.exit(1)
+    return handleExc
 
 modopts = ['d']
 def pickloop(objtype, options):
@@ -97,6 +108,7 @@ def searchquery(ctx, param, value):
 @click.option('--webtorrentpass', '-w', default=None, type=unicode, help="cli options directly passed to webtorrent")
 @click.option('-x', type=click.IntRange(0,2), default=0, help="set 0 to stream. set 1 to dl. set 2 to dl & stream. use webtorrent's -o flag to set dl location. default = 0.")
 
+@handleEmptyMenu
 def torrent(search_query, menuopts, mpvpass, webtorrentpass, x):
     # pick a torrent
     # pick a video from the torrent
@@ -149,6 +161,8 @@ def torrent(search_query, menuopts, mpvpass, webtorrentpass, x):
 
 @click.option('--menuopts', '-o', callback=menuoptfn, help="period delimited list of integers, to pre-emptively select menu options.")
 @click.option('--mpvpass', '-m', default=None, type=unicode, help="cli options directly passed to mpv.")
+
+@handleEmptyMenu
 def web(search_query, menuopts, mpvpass):
     from nyaa.parsers.masterani import parser as masterani
     if not search_query:
