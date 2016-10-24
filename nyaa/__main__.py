@@ -51,8 +51,8 @@ def pick(objtype, options):
         return options[0]
     
     for i, option in enumerate(options):
-        index = click.style("{}]".format(i+1), fg="magenta")
-        click.echo(u"{:<13} {}".format(index, option))
+        index = click.style("{:03d}".format(i+1), fg="magenta")
+        click.echo(u"{} {}".format(index, option))
     return pickloop(objtype, options)
 
 
@@ -83,7 +83,7 @@ def searchquery(ctx, param, value):
     if value: # got it from the cli
         return ' '.join(value)
     else: # nothing 
-        return click.Prompt("Please enter a search term")
+        return click.prompt("Please enter a search term")
 
 
 @click.command('torrent', short_help='Search from available torrent websites.')
@@ -175,7 +175,7 @@ def web(search_query, menuopts, mpvpass):
 
         try:
             name = click.style(show.name, underline=True)
-            ep = click.style(episode.ep_number, fg="magenta")
+            ep = click.style(str(episode.ep_number), fg="magenta")
             click.echo("Playing: episode {} {}".format(ep, name))
             command = ["mpv", url]
             if mpvpass:

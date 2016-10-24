@@ -63,19 +63,20 @@ def parse_nyaa(soup, data):
         seeders  = row.contents[4].text.strip()
         leechers = row.contents[5].text.strip()
 
-        torrent = classes.Torrent(
-            trusted  = trusted,
-            name     = name,
-            link     = link,
-            size     = size,
-            seeders  = seeders,
-            leechers = leechers,
-            get_magnet = lambda: get_magnet(link))
         try:
-            if int(torrent.seeders) > 5:
+            if int(seeders) > 5:
+                torrent = classes.Torrent(
+                    trusted  = trusted,
+                    name     = name,
+                    link     = link,
+                    size     = size,
+                    seeders  = seeders,
+                    leechers = leechers,
+                    get_magnet = lambda: get_magnet(link))
                 temp.append(torrent)
         except ValueError:
             pass
+
     data += temp
 
 parser = classes.TorrentFetcher(
