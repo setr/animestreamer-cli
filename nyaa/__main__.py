@@ -43,10 +43,10 @@ def pickloop(objtype, options):
             click.echo(err)
     return options[index - 1]
 
-def pick(objtype, options, quickpick):
+def pick(objtype, options):
     if len(options) == 0:
         return None
-    if len(options) == 1 and quickpick:
+    if len(options) == 1:
         click.echo("Only one option... Autoselecting: {}".format(options[0]))
         return options[0]
     
@@ -56,14 +56,14 @@ def pick(objtype, options, quickpick):
     return pickloop(objtype, options)
 
 
-def select(text, options, quickvar, sh_quick=True, quickpick=False):
+def select(text, options, quickvar, sh_quick=True):
     # sh_quick --> should we consider quickvar? the big loop only wants to use it once.
     if quickvar and sh_quick:
         try:
             return options[quickvar-1]
         except IndexError:
             click.echo("{}: Index out of range.".format(text))
-    return pick(text, options, quickpick)
+    return pick(text, options)
 
 @click.group()
 def cli():
@@ -72,13 +72,11 @@ def cli():
 @click.command('torrent', short_help='Search from available streaming websites')
 @click.option('--search_query' , '-s' , prompt="Please enter a search term")
 @click.option('--quick', '-q', multiple=True, type=int, help="quick select menu items. Only makes sense with -n")
-@click.option('--quickpick', '-qp', is_flag=True, help="disables option menu for all items")
-@click.option('--sortbyname',  '-n' , is_flag=True)
 @click.option('--mpvpass', '-m', default=None, type=unicode, help="cli options directly passed to mpv. ---TODO")
 @click.option('--webtorrentpass', '-w', default=None, type=unicode, help="cli options directly passed to webtorrent")
 @click.option('-x', type=click.IntRange(0,2), default=0, help="set 0 to stream. set 1 to dl. set 2 to dl & stream. use webtorrent's -o flag to set dl location. default = 0.")
 
-def torrent(search_query, quick, quickpick, sortbyname, mpvpass, webtorrentpass, x):
+def torrent(search_query, quick, mpvpass, webtorrentpass, x):
     # pick a torrent
     # pick a video from the torrent
     # play
@@ -88,11 +86,9 @@ def torrent(search_query, quick, quickpick, sortbyname, mpvpass, webtorrentpass,
     q_filenum = quick[1] if len(quick) > 1 else None
 
     torrents = nyaa.fetch_torrentlist("urusei")
+    torrents = sorted(torrents, key=lambda t: t.name)
 
-    if sortbyname:
-        torrents = sorted(torrents, key=lambda t: t.name)
-
-    torrent = select("Torrent", torrents, q_torrent, quickpick=quickpick)
+    torrent = select("Torrent", torrents, q_torrent)
     magnet = torrent.get_magnet(torrent)
 
     click.echo("getting filelist...")
@@ -101,7 +97,7 @@ def torrent(search_query, quick, quickpick, sortbyname, mpvpass, webtorrentpass,
 
     first = True
     while True:
-        filen = select("Torrent File", filelist, q_filenum, sh_quick=first, quickpick=quickpick)
+        filen = select("Torrent File", filelist, q_filenum, sh_quick=first)
 
         name = click.style(torrent.name, underline=True)
         f  = click.style(filen.name, fg="magenta")
@@ -125,9 +121,8 @@ def torrent(search_query, quick, quickpick, sortbyname, mpvpass, webtorrentpass,
 @click.command('web', short_help='Search from available streaming websites')
 @click.option('--search_query' , '-s' , prompt="Please enter a search term")
 @click.option('--quick', '-q', multiple=True, type=int)
-@click.option('--quickpick', '-qp', is_flag=True, help="disables option menu for all items")
 @click.option('--mpvpass', '-m', default=None, type=unicode, help="cli options directly passed to mpv.")
-def web(search_query, quick, quickpick, mpvpass):
+def web(search_query, quick, mpvpass):
     from nyaa.parsers.masterani import parser as masterani
     # pick a show
     # pick an episode
@@ -139,15 +134,15 @@ def web(search_query, quick, quickpick, mpvpass):
 
 
     shows = masterani.fetch_shows(search_query)
-    show = select("Show", shows, q_show, quickpick=quickpick)
+    show = select("Show", shows, q_show)
     episodes = show.nextlist()
     #episodes = show.get_episodelist(show.link)
 
     first = True
     while True:
-        episode = select("Episode", episodes, q_epnum, sh_quick=first, quickpick=quickpick)
+        episode = select("Episode", episodes, q_epnum, sh_quick=first)
         hosts = episode.nextlist()
-        url = select("Host", hosts, q_host, sh_quick=first, quickpick=quickpick)
+        url = select("Host", hosts, q_host, sh_quick=first)
         url = url.link
 
         try:
