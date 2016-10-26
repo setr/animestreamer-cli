@@ -4,7 +4,6 @@ import cfscrape
 from bs4 import BeautifulSoup
 import json, re
 from .classes import WebEpisode, WebSeries, WebVideo, WebFetcher
-from pprint import pprint
 
 base = "http://www.masterani.me/anime"
 api_base = "http://www.masterani.me/api/anime/"
@@ -38,12 +37,15 @@ def fetch_masterani(search_query):
                 description = ep['info']['description'] 
             else: 
                 description = "description not available"
+
+            if not ep_title: # then this is actually a movie, not a series
+                ep_title = name  # in which case, the name of the only episode is actually the name of the series.
             ep_link = "{}/watch/{}/{}".format(base, anime['slug'], ep_number)
             episode = WebEpisode(
                         ep_number = ep_number,
                         ep_title = ep_title,
                         ep_link = ep_link,
-                        get_videos = lambda: get_videos(ep_link),
+                        get_videos = get_videos,
                         description = description)
             episodes.append(episode)
          
@@ -52,7 +54,7 @@ def fetch_masterani(search_query):
                     link = link,
                     ep_count = episode_count,
                     description = synopsis,
-                    get_episodelist = lambda episodes=episodes: episodes) 
+                    get_episodelist = lambda x, episodes=episodes: episodes) 
         videolist.append(series)
     return videolist
 
@@ -64,8 +66,10 @@ def get_videos(link):
     # and now we have a js dict, which we need to make a valid JSON
     # so we can properly go through it. So now we do some horrendously brittle substitutions
     vidjson = re.search("({.*})", js, re.DOTALL).group(1)
-    vidjson = re.sub(r"(\d+),", r'"\1",', vidjson)
-    vidjson = re.sub(r"(\.?[\w\v]+): ", r'"\1": ', vidjson)
+    vidjson = re.sub(r":(\d+),", r':"\1",', vidjson)
+    vidjson = re.sub(r"(\d+)([\]}])", r'"\1"\2', vidjson)
+    vidjson = re.sub(r"([\[{])(\d+)", r'\1"\2"', vidjson)
+    vidjson = re.sub(r"(  +)(\.?[\w\v]+): ", r'\1"\2": ', vidjson)
     vidjson = re.sub(r"null", r'"null"', vidjson)
     d = json.loads(vidjson)
 

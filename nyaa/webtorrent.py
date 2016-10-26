@@ -4,6 +4,7 @@ from nyaa.parsers.classes import Torrent_File
 name_color = "white"
 
 def webtorrent_filelist(magnet):
+    print("") # because we'll erase 1 line up.
     get_filelist = ["webtorrent", magnet,
                         "--mpv", "--select"]
     import os
@@ -20,7 +21,7 @@ def webtorrent_filelist(magnet):
                 ERASE_LINE = '\x1b[2K'
                 print(CURSOR_UP_ONE + ERASE_LINE + CURSOR_UP_ONE)
                 print(line)
-            if 'To select a specific file, re-run `webtorrent` with "--select [index]"' in line:
+            elif 'To select a specific file, re-run `webtorrent` with "--select [index]"' in line:
                 break
             elif is_filelist:
                 files.append(line)
