@@ -59,7 +59,7 @@ def pickloop(options):
                 err = "{} Correct form: {} {}".format(msg, i, m)
         if err:
             click.echo(err)
-    click.echo("selected: {} {}".format(index, options[index]))
+    click.echo(u"selected: {} {}".format(index, options[index]))
     return options[index]
 
 
@@ -67,7 +67,7 @@ def select(options, quickvar, sh_quick=True):
     # sh_quick --> should we consider quickvar? the big loop only wants to use it once.
     if quickvar and sh_quick:
         try:
-            click.echo("selected: {}".format(options[quickvar-1]))
+            click.echo(u"selected: {}".format(options[quickvar-1]))
             return options[quickvar-1]
         except IndexError:
             click.echo("Index out of range.")
@@ -149,7 +149,6 @@ def torrent(search_query, menuopts, mpvpass, webtorrentpass, x):
         try:
             torrent = select(s.torrents, q_torrent, sh_quick=firstrun)
         except goBackErr:
-            #s.torrents = None
             s.search_query = None
             raise
         s.magnet = torrent.get_magnet()
@@ -162,9 +161,6 @@ def torrent(search_query, menuopts, mpvpass, webtorrentpass, x):
         try:
             filen = select(s.filelist, q_filenum, sh_quick=firstrun)
         except goBackErr:
-            s.filelist = None
-            s.torrentname = None
-            s.magnet = None
             raise
         s.filen = filen
 
@@ -186,6 +182,7 @@ def torrent(search_query, menuopts, mpvpass, webtorrentpass, x):
         except KeyboardInterrupt:
             time.sleep(0.5) # so the user has a chance to interrupt again to kill python, in the case of a single torrent-file
             raise goBackErr
+
     menu = [
         get_query,
         select_torrent,
