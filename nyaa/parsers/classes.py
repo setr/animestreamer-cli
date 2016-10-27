@@ -72,16 +72,24 @@ class WebSeries(object):
     name            = attr.ib()
     link            = attr.ib()
     get_episodelist = attr.ib()
-    ep_count        = attr.ib(default = -1, convert=int)
+    ep_count        = attr.ib()
     description     = attr.ib(default = "Description not available", convert = set_description)
 
     def nextlist(self):
         return self.get_episodelist(self.link) 
 
     def __format__(self, format_spec):  
-        ep_count = click.style("{:03d}".format(self.ep_count), fg="blue")
+        epc = self.ep_count
+        if epc == 1:
+            epc = 'MOV'
+        elif not epc:
+            epc = 'N/A'
+        try:
+            epc = click.style("{:03d}".format(epc), fg="blue")
+        except ValueError:
+            epc = click.style("{:3}".format(epc), fg="blue")
         name = stylename(self.name)
-        return u"{} {}".format(ep_count , name)
+        return u"{} {}".format(epc, name)
 
 @attr.s
 class WebEpisode(object):
@@ -105,10 +113,12 @@ class WebVideo(object):
     host       = attr.ib()
     resolution = attr.ib()
     link       = attr.ib()
+    subdub     = attr.ib()
     description = attr.ib(default = "Description not available", convert = set_description)
 
     def __format__(self, format_spec):
         res = self.resolution + "p"
         resolution = click.style("{:5}".format(res), fg="blue")
+        subdub = click.style(self.subdub, fg="magenta")
         name = stylename(self.host)
-        return u"{} {}".format(resolution, name)
+        return u"{} {} {}".format(resolution, name, subdub)

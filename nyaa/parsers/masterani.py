@@ -33,10 +33,7 @@ def fetch_masterani(search_query):
         for ep in d['episodes']:
             ep_number = ep['info']['episode']
             ep_title = ep['info']['title']
-            if ep['info']['description']:
-                description = ep['info']['description'] 
-            else: 
-                description = "description not available"
+            description = ep['info']['description'] if ep['info']['description'] else "description not available"
 
             if not ep_title: # then this is actually a movie, not a series
                 ep_title = name  # in which case, the name of the only episode is actually the name of the series.
@@ -76,6 +73,7 @@ def get_videos(link):
     videos = [ WebVideo( 
         host = m['host']['name'],
         link = m['host']['embed_prefix'] + m['embed_id'] + m['host']['embed_suffix'],
+        subdub = "N/A" if m['type'] is None else "SUB" if m['type'] == "1" else "DUB",
         resolution = m['quality'])
     for m in d['mirrors']]
     return videos
