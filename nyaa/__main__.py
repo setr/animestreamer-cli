@@ -17,8 +17,38 @@ def handleEmptyMenu(fn):
 
 class goBackErr(Exception):
     pass 
+class repeatErr(Exception):
+    pass
+class finishedErr(Exception):
+    pass
 
-modopts = ['d']
+singleopts = {
+            #'n': 'Next page of list', 
+            'b' : 'go Back to previous menu',
+            'r' : 'Repeat options',
+            'h' : 'Print help'
+            }
+indexopts = {
+            'd': 'Describe item'
+            }
+
+def printhelp():
+    click.echo("")
+    click.echo("Usage: [INDEX]")
+    click.echo("Usage: [OPTION] (INDEX)")
+
+    click.echo("Options -- no index:")
+    for k,v in singleopts.items():
+        click.echo("\t", nl=False)
+        k = click.style(k, fg="magenta")
+        click.echo('{} {}'.format(k, v))
+
+    click.echo("Options -- with index:")
+    for k,v in indexopts.items():
+        click.echo("\t", nl=False)
+        k = click.style(k, fg="magenta")
+        click.echo('{} {}'.format(k, v))
+
 def pickloop(options):
     def checkrange(i):
         err = None
@@ -37,34 +67,46 @@ def pickloop(options):
                 index = p-1
         except ValueError: # integer + modifier ie 10 d 
             try: 
-                match = re.search("([A-Za-z])|([A-Za-z]) *?(\d+)", userin)
+                match = re.search("([A-Za-z]) *(\d+)?", userin)
                 modifier = match.group(1).lower()
-                if modifier not in modopts:
-                    err = "Not a valid option for this menu."
                 p = match.group(2)
-                if p: # handle menu modifiers requiring an option selected
+                if p and modifier in indexopts.keys():  # handle menu modifiers requiring an option selected
                     p = int(p)
                     err = checkrange(p)
                     if not err:
                         if modifier == 'd':
-                            click.echo( options[p-1] )
+                            click.echo('{}'.format( options[p-1] ))
                             click.echo( '    ' + options[p-1].description() )
-                else: # handle modifiers not selecting a menu
+                # ie d with no index
+                elif not p and modifier in indexopts.keys():
+                    o = click.style(modifier, fg="magenta")
+                    i = click.style("[index]", fg="blue") 
+                    err = "Usage: {} {}".format(o, i)
+
+                # a non-index option, but given an index anyways, is accepted and index ignored.
+                elif not p and modifier in singleopts.keys():
                     if modifier == 'b':
                         raise goBackErr
+                    elif modifier == 'r':
+                        raise repeatErr
+                    elif modifier == 'h':
+                        printhelp()
+                else:
+                    raise AttributeError
             except AttributeError:
                 i = click.style('[index]', fg="magenta")
-                m = click.style('(modifier)', fg="blue")
-                msg = click.style('invalid input.', fg="red")
-                err = "{} Correct form: {} {}".format(msg, i, m)
+                o = click.style('(option)', fg="blue")
+                o2 = click.style('[option]', fg="blue")
+                msg = click.style('Invalid input.', fg="red")
+                err = "{} Correct form: {} {} or {}".format(msg, o, i, o2)
         if err:
             click.echo(err)
-    click.echo(u"selected: {} {}".format(index, options[index]))
+    click.echo(u"selected: {} {}".format(index+1, options[index]))
     return options[index]
 
 
 def select(options, quickvar, sh_quick=True):
-    # sh_quick --> should we consider quickvar? the big loop only wants to use it once.
+    # sh_quick --> should we consider quickvar? We only want to when straight from cli.
     if quickvar and sh_quick:
         try:
             click.echo(u"selected: {}".format(options[quickvar-1]))
@@ -81,10 +123,13 @@ def select(options, quickvar, sh_quick=True):
         return options[0]
     
     for i, option in enumerate(options):
-        index = click.style("{:03d}".format(i+1), fg="magenta")
+        index = click.style("{:<3}".format(i+1), fg="magenta")
         click.echo(u"{} {}".format(index, option))
 
-    return pickloop(options)
+    try:
+        return pickloop(options)
+    except repeatErr:
+        return select(options, None, False)
 
 @click.group()
 def cli():
@@ -100,17 +145,10 @@ def menuoptfn(ctx, param, value):
     else:
         return []
 
-def searchquery(ctx, param, value):
-    if value: # got it from the cli
-        return ' '.join(value)
-    else: # nothing 
-        return click.prompt("Please enter a search term")
-
 
 @click.command('torrent', short_help='Search from available torrent websites.')
 
 @click.argument('search_query', nargs=-1, 
-        callback=searchquery,
         required=False)
 
 @click.option('--menuopts', '-o', callback=menuoptfn, help="period delimited list of integers, to pre-emptively select menu options.")
@@ -131,7 +169,6 @@ def torrent(search_query, menuopts, mpvpass, webtorrentpass, x):
 
     @attr.s
     class Storage(object):
-        search_query = attr.ib(init=False),
         torrents     = attr.ib(init=False),
         torrentname  = attr.ib(init=False),
         magnet       = attr.ib(init=False),
@@ -140,17 +177,18 @@ def torrent(search_query, menuopts, mpvpass, webtorrentpass, x):
 
     def get_query(s):
         from nyaa.parsers.nyaa import parser as nyaa
-        if not s.search_query:
-            s.search_query = click.prompt("Please enter a search term")
-        s.torrents = nyaa.fetch_torrentlist(s.search_query)
+        if firstrun and search_query:
+            query = search_query
+        else:
+            query = click.prompt("Please enter a search term")
+            if query == 'b':
+                raise goBackErr
+
+        s.torrents = nyaa.fetch_torrentlist(query)
         s.torrents = sorted(s.torrents, key=lambda t: t.name)
 
     def select_torrent(s):
-        try:
-            torrent = select(s.torrents, q_torrent, sh_quick=firstrun)
-        except goBackErr:
-            s.search_query = None
-            raise
+        torrent = select(s.torrents, q_torrent, sh_quick=firstrun)
         s.magnet = torrent.get_magnet()
         s.torrentname = torrent.name
         s.filelist = webtorrent_filelist(s.magnet)
@@ -158,11 +196,7 @@ def torrent(search_query, menuopts, mpvpass, webtorrentpass, x):
     def select_filen(s):
         click.echo("getting filelist...")
         click.echo("")
-        try:
-            filen = select(s.filelist, q_filenum, sh_quick=firstrun)
-        except goBackErr:
-            raise
-        s.filen = filen
+        s.filen = select(s.filelist, q_filenum, sh_quick=firstrun)
 
     def execute_file(s):
         name = click.style(s.torrentname, underline=True)
@@ -181,6 +215,8 @@ def torrent(search_query, menuopts, mpvpass, webtorrentpass, x):
             subprocess.call( command )
         except KeyboardInterrupt:
             time.sleep(0.5) # so the user has a chance to interrupt again to kill python, in the case of a single torrent-file
+        finally:
+            raise finishedErr
             raise goBackErr
 
     menu = [
@@ -196,28 +232,23 @@ def torrent(search_query, menuopts, mpvpass, webtorrentpass, x):
         try:
             menu[i](s)
             i += 1
-        except goBackErr:
-            firstrun = False
+        except (goBackErr, finishedErr):
             if i > 0:
                 i -= 1
             else:
-                print "Cannot go back."
-
+                click.echo("cannot go back.")
+            firstrun = False
 
 @click.command('web', short_help='Search from available streaming websites')
 
 @click.argument('search_query', nargs=-1, 
-        callback=searchquery,
         required=False)
 
 @click.option('--menuopts', '-o', callback=menuoptfn, help="period delimited list of integers, to pre-emptively select menu options.")
 @click.option('--mpvpass', '-m', default=None, type=unicode, help="cli options directly passed to mpv.")
 
-@handleEmptyMenu
+#@handleEmptyMenu
 def web(search_query, menuopts, mpvpass):
-    from nyaa.parsers.masterani import parser as masterani
-    if not search_query:
-        search_query = click.Prompt("Please enter a search term")
     # pick a show
     # pick an episode
     # pick a host
@@ -225,31 +256,78 @@ def web(search_query, menuopts, mpvpass):
     q_show   = menuopts[0] if menuopts else None
     q_epnum =  menuopts[1] if len(menuopts) > 1 else None
     q_host   = menuopts[2] if len(menuopts) > 2 else None
+    firstrun = True
 
-    shows = masterani.fetch_shows(search_query)
-    show = select(shows, q_show)
-    episodes = show.nextlist()
-    #episodes = show.get_episodelist(show.link)
+    @attr.s
+    class Storage(object):
+        shows          = attr.ib(init = False),
+        episodes       = attr.ib(init = False),
+        url            = attr.ib(init = False),
+        showname       = attr.ib(init = False),
+        episode_number = attr.ib(init = False)
 
-    first = True
-    while True:
-        episode = select(episodes, q_epnum, sh_quick=first)
-        hosts = episode.nextlist()
-        url = select(hosts, q_host, sh_quick=first)
-        url = url.link
+    def get_query(s):
+        from nyaa.parsers.masterani import parser as masterani
+        if firstrun and search_query:
+            query= search_query
+        else:
+            query = click.prompt("Please enter a search term")
+            if query == 'b':
+                raise goBackErr
+        s.shows = masterani.fetch_shows(query)
 
+    def select_show(s):
+        show = select(s.shows, q_show)
+        s.showname = show.name
+        s.episodes = show.nextlist()
+
+    def select_episode(s):
+        episode = select(s.episodes, q_epnum, sh_quick=firstrun)
+        s.episode_number = episode.ep_number
+        s.hosts = episode.nextlist()
+
+    def select_host(s):
+        url = select(s.hosts, q_host, sh_quick=firstrun)
+        s.url = url.link
+
+    def execute_file(s):
         try:
-            name = click.style(show.name, underline=True)
-            ep = click.style(str(episode.ep_number), fg="magenta")
+            name = click.style(s.showname, underline=True)
+            ep = click.style(str(s.episode_number), fg="magenta")
             click.echo("Playing: episode {} {}".format(ep, name))
-            command = ["mpv", url]
+            command = ["mpv", s.url]
             if mpvpass:
                 command.insert(1, mpvpass)
             subprocess.call( command )
         except KeyboardInterrupt:
             time.sleep(0.5) # so the user has a chance to interrupt again to kill python, in the case where theres 1 ep, 1 host
-        first = False
+        finally:
+            raise finishedErr
 
+
+    menu = [
+        get_query,
+        select_show,
+        select_episode,
+        select_host,
+        execute_file]
+
+    s = Storage()
+    s.search_query = search_query
+    i = 0
+    while i < len(menu):
+        try:
+            menu[i](s)
+            i += 1
+        except goBackErr: # get_query doesn't throw goBack, so we don't have to worry about menu[0] - 1.
+            if i > 0:
+                i -= 1
+            else:
+                click.secho("Error: Cannot go back.", fg="red")
+            firstrun = False
+        except finishedErr:  # we want to get back to select_episode, not select_host
+            i -= 2
+            firstrun = False
 
 def main():
     cli.add_command(torrent)
