@@ -41,3 +41,10 @@ Ex:
 nyaa web "urusei"
 ```
 
+when selecting, the following commands are also available
+Command  | Effect
+:--------|:-------
+d [index]| describe the item
+r        | repeat the list
+b        | go back to the previous list
+h        | print help.
