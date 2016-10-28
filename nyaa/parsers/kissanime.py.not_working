@@ -10,11 +10,11 @@ def fetch_kiss(search_query):
     #link = 'http://kissanime.to/Search/SearchSuggestx'
     link = 'http://kissanime.to/Search/Anime'
     
-    html = scraper.post(link, data={'keyword': search_query}, verify=True).content
-    soup = BeautifulSoup(html, 'html.parser')
-    
-    objs = []
-    listing = soup.find('table', class_='listing')
+html = scraper.post(link, data={'keyword': search_query}, verify=True).content
+soup = BeautifulSoup(html, 'html.parser')
+
+objs = []
+listing = soup.find('table', class_='listing')
     for td in listing.find_all('td'):
         a = td.find('a')
         p = td.find('p')

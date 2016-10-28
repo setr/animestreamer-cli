@@ -157,7 +157,7 @@ def menuoptfn(ctx, param, value):
 @click.option('--webtorrentpass', '-w', default=None, type=unicode, help="cli options directly passed to webtorrent")
 @click.option('-x', type=click.IntRange(0,2), default=0, help="set 0 to stream. set 1 to dl. set 2 to dl & stream. use webtorrent's -o flag to set dl location. default = 0.")
 
-#@handleEmptyMenu
+@handleEmptyMenu
 def torrent(search_query, menuopts, mpvpass, webtorrentpass, x):
     # pick a torrent
     # pick a video from the torrent
@@ -207,7 +207,6 @@ def torrent(search_query, menuopts, mpvpass, webtorrentpass, x):
             download = "download" if x in [1,2] else ""
             stream = "--mpv" if x in [0,2] else ""
             command = ["webtorrent", s.magnet, "--select", str(s.filen.index)]
-            print command
             if webtorrentpass:
                 command.insert(5, webtorrentpass)
             if x in [0,2]:
@@ -250,7 +249,7 @@ def torrent(search_query, menuopts, mpvpass, webtorrentpass, x):
 @click.option('--menuopts', '-o', callback=menuoptfn, help="period delimited list of integers, to pre-emptively select menu options.")
 @click.option('--mpvpass', '-m', default=None, type=unicode, help="cli options directly passed to mpv.")
 
-#@handleEmptyMenu
+@handleEmptyMenu
 def web(search_query, menuopts, mpvpass):
     # pick a show
     # pick an episode
