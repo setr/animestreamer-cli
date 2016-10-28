@@ -15,11 +15,14 @@ Currently:
 There are no other sites supported at this time.
 
 # animestreamer-cli
-cli menu for torrents and probably website-streamers later
+cli menu for torrents and websites
 
 depends on webtorrent to handle torrent-streaming
 
 calls mpv for viewing
+
+Keep in mind that webtorrent fails to initialize for some magnet urls. I don't know why. If it takes more than a minute to find peers, it's probably fucked. 
+
 
 Requires:
   * nodejs
