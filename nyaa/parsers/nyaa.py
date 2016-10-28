@@ -45,14 +45,14 @@ def parse_nyaa(soup, data):
 
     def get_magnet(link):
         tid = re.search("&tid=(\d+)", link).group(1)
-        magnet = "https://www.nyaa.se/?page=download&tid=" + tid + "&magnet=1"
+        magnet = "https://www.nyaa.se/?page=download&tid=" + tid + "&txt=1"
         # we actually need it to fail, as nyaa redirects to the magnetlink and baffles urllib/requests
-        try:
-            response = scraper.get(magnet)
-        except requests.exceptions.InvalidSchema as e:
-            magnet = e.args[0]
-            magnet = re.search("(magnet:.*)'", magnet).group(1)
-            #magnet = e.geturl().replace("magnet:/?", "magnet:?")
+        #try:
+        #    response = scraper.get(magnet)
+        #except requests.exceptions.InvalidSchema as e:
+        #    magnet = e.args[0]
+        #    magnet = re.search("(magnet:.*)'", magnet).group(1)
+        #    #magnet = e.geturl().replace("magnet:/?", "magnet:?")
         return magnet 
 
     for row in soup.findAll("tr", {"class": "tlistrow"}):

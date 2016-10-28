@@ -7,6 +7,8 @@ def webtorrent_filelist(magnet):
     print("") # because we'll erase 1 line up.
     get_filelist = ["webtorrent", magnet,
                         "--mpv", "--select"]
+    print magnet
+    print
     import os
     DEVNULL = open(os.devnull, 'wb')
     proc = subprocess.Popen(get_filelist, stdout=subprocess.PIPE, stderr=DEVNULL)

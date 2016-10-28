@@ -149,6 +149,7 @@ def menuoptfn(ctx, param, value):
 @click.command('torrent', short_help='Search from available torrent websites.')
 
 @click.argument('search_query', nargs=-1, 
+        callback=lambda ctx, param, val: ' '.join(val),
         required=False)
 
 @click.option('--menuopts', '-o', callback=menuoptfn, help="period delimited list of integers, to pre-emptively select menu options.")
@@ -206,6 +207,7 @@ def torrent(search_query, menuopts, mpvpass, webtorrentpass, x):
             download = "download" if x in [1,2] else ""
             stream = "--mpv" if x in [0,2] else ""
             command = ["webtorrent", s.magnet, "--select", str(s.filen.index)]
+            print command
             if webtorrentpass:
                 command.insert(5, webtorrentpass)
             if x in [0,2]:
@@ -217,7 +219,7 @@ def torrent(search_query, menuopts, mpvpass, webtorrentpass, x):
             time.sleep(0.5) # so the user has a chance to interrupt again to kill python, in the case of a single torrent-file
         finally:
             raise finishedErr
-            raise goBackErr
+            #raise goBackErr
 
     menu = [
         get_query,
@@ -242,6 +244,7 @@ def torrent(search_query, menuopts, mpvpass, webtorrentpass, x):
 @click.command('web', short_help='Search from available streaming websites')
 
 @click.argument('search_query', nargs=-1, 
+        callback=lambda ctx, param, val: ' '.join(val),
         required=False)
 
 @click.option('--menuopts', '-o', callback=menuoptfn, help="period delimited list of integers, to pre-emptively select menu options.")
