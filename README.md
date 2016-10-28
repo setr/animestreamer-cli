@@ -42,6 +42,7 @@ nyaa web "urusei"
 ```
 
 when selecting, the following commands are also available
+
 Command  | Effect
 :--------|:-------
 d [index]| describe the item
